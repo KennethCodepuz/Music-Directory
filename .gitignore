@@ -1,87 +1,15 @@
-# ─── Secrets ───────────────────────────────────────────────
-# Environment files. Commit a .env.example with placeholder values instead.
-.env
-.env.*
-!.env.example
-secrets.properties
-*.secrets
-local.properties
-
-# App signing keys: anyone who has these can publish updates as you
-*.jks
-*.keystore
-keystore.properties
-signing.properties
-
-# Private keys and certificates (TLS, SSH)
-*.pem
-*.key
-*.p12
-*.pfx
-id_rsa*
-id_ed25519*
-
-# Firebase / Google service configs, if ever added
-google-services.json
-GoogleService-Info.plist
-
-# ─── Build output ──────────────────────────────────────────
-build/
-.gradle/
-.kotlin/
-.externalNativeBuild/
-.cxx/
-captures/
-*.apk
-*.aab
-*.ap_
-*.dex
-output-metadata.json
-
-# ─── IDE (Android Studio / IntelliJ) ───────────────────────
-# Shared project settings in .idea/ stay tracked; these are per-machine.
 *.iml
-.idea/workspace.xml
-.idea/tasks.xml
-.idea/usage.statistics.xml
-.idea/dictionaries/
-.idea/shelf/
-.idea/caches/
-.idea/libraries/
-.idea/modules.xml
-.idea/navEditor.xml
-.idea/assetWizardSettings.xml
-.idea/deviceManager.xml
-.idea/deploymentTargetSelector.xml
-.idea/androidTestResultsUserPreferences.xml
-.idea/other.xml
-.vscode/
-
-# ─── Logs and crash dumps ──────────────────────────────────
-*.log
-*.hprof
-hs_err_pid*
-
-# ─── OS files ──────────────────────────────────────────────
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
 .DS_Store
-Thumbs.db
-desktop.ini
-
-# ─── Tooling ───────────────────────────────────────────────
-.impeccable/config.local.json
-
-# ─── Backend / server (for when it exists) ─────────────────
-node_modules/
-__pycache__/
-*.pyc
-.venv/
-venv/
-# Music library and downloads never belong in git
-*.mp3
-*.flac
-*.m4a
-*.opus
-*.webm
-*.db
-*.sqlite
-*.sqlite3
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
