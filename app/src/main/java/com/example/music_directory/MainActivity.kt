@@ -9,17 +9,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.example.music_directory.feature.home.HomeScreen
 import com.example.music_directory.feature.library.LibraryScreen
 import com.example.music_directory.feature.navigation.BottomNavigation
 import com.example.music_directory.feature.navigation.Destination
-
 import com.example.music_directory.feature.search.SearchScreen
 import com.example.music_directory.ui.theme.MusicdirectoryTheme
 
@@ -38,21 +37,30 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainScreen() {
-    var currentDestination by rememberSaveable {mutableStateOf(Destination.HOME)}
+    val navController = rememberNavController()
+    val backStackEntry by navController.currentBackStackEntryAsState()
+
     Scaffold(modifier = Modifier.fillMaxSize(), bottomBar = { BottomNavigation(
-        currentDestination = currentDestination,
-        onDestinationSelected = {destination -> currentDestination = destination}
+        currentDestination = backStackEntry,
+        onDestinationSelected = {destination -> navController.navigate(destination.route) {
+            popUpTo(Destination.HOME.route)
+            launchSingleTop = true
+        }}
     ) }) { innerPadding ->
 
-        when (currentDestination) {
-            Destination.HOME ->
+        NavHost(
+            navController = navController,
+            startDestination = "home"
+        ) {
+            composable("home") {
                 HomeScreen(modifier = Modifier.padding(innerPadding))
-
-            Destination.SEARCH ->
+            }
+            composable("search") {
                 SearchScreen(modifier = Modifier.padding(innerPadding))
-
-            Destination.LIBRARY ->
+            }
+            composable("library") {
                 LibraryScreen(modifier = Modifier.padding(innerPadding))
+            }
         }
     }
 }
