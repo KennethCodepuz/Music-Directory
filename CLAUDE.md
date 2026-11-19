@@ -8,6 +8,10 @@ The user is a junior developer building a personal Spotify-style music app to le
 
 - **Do not write or hand over code unless the user explicitly asks for it.** Don't edit project source files on your own initiative. Point to the relevant file/line, name the APIs or concepts to look up, and let the user write it. Small snippets of *general* syntax are fine only if asked.
 
+### Where we are: improving v0 in rounds
+
+The user can already build simple CRUD apps; what they want to learn is the step beyond. So Claude built **v0**, the simplest working CRUD version (playlists and songs, app + Ktor + Postgres), deliberately naive. Now each round takes one real weakness of v0 and makes the app sturdier: fewer errors, handled edge cases, better structure, security. Who writes the fix is agreed per round; by default the user does, using the loop below.
+
 ### Teaching method: problem first, user proposes the fix
 
 The user learns best by solving problems themselves. Default to this loop:
@@ -28,7 +32,9 @@ When they ask "how do I do X", turn it into a problem to reason about (what shou
 ## Project context
 
 - Personal-use music streaming app (Spotify clone). Music will be served from the user's **own home server** and must be accessible from anywhere.
-- Current state: only the **Android client** exists, at a very early UI-scaffolding stage. **There is no backend yet** — designing and building it (and the network exposure of the home server) is upcoming work and a major teaching opportunity.
+- Current state: **v0** works end to end on a dev machine: the Android app (Library tab) talks to a Ktor server in `server/`, which stores playlists and songs in PostgreSQL. YouTube search, yt-dlp, Navidrome, playback, auth and internet exposure don't exist yet.
+- Storage plan: PostgreSQL on the server; SQLite on the phone later, for offline downloads.
+- UI follows the Figma "Spotify - Mobile UI Kit (Community)" file (`O5HZXyVNLP1paIWRpDmL3L`): dark `#121212` background, white titles, grey `#B3B3B3` subtitles, green `#1ED760` accent, square artwork. Use its layouts, never Spotify's name or logo.
 - Git repo, public on GitHub (`origin`). `main` is the working version; work happens on `feature/*` branches, reviewed before merging. Secrets never go in the repo, and never in the APK either: anything the app ships with is extractable, so API keys live only on the backend.
 
 ## Android client
@@ -36,11 +42,24 @@ When they ask "how do I do X", turn it into a problem to reason about (what shou
 Stack: Kotlin, Jetpack Compose (Material 3), Navigation Compose, Gradle Kotlin DSL with a version catalog (`gradle/libs.versions.toml`). AGP 9.x, compileSdk/targetSdk 37, minSdk 24, Java 11 target. Single module `:app`, package `com.example.music_directory` (Gradle root project name `Music-directory`).
 
 Structure:
-- `MainActivity.kt` — `MainScreen` hosts a `Scaffold` with `BottomNavigation` as the bottom bar and a `NavHost` (home/search/library) as content, wrapped in `MusicdirectoryTheme`.
-- `feature/<name>/` — feature-based packaging. `home/`, `search/`, `library/` each hold a placeholder screen (`home/` also has an empty `HomeViewModel.kt`). `feature/navigation/` has the `Destination` enum (routes HOME/SEARCH/LIBRARY) and `BottomNavigation`.
-- `ui/theme/` — default template theme (dynamic color enabled).
+- `MainActivity.kt` — `MainScreen` hosts a `Scaffold` with `BottomNavigation` as the bottom bar and a `NavHost` as content: home, search, library, and `playlist/{id}`.
+- `feature/<name>/` — feature-based packaging. `library/` lists playlists (create/rename/delete), `playlist/` shows one playlist's songs (add/remove). `home/` and `search/` are placeholders. `feature/navigation/` has the `Destination` enum and `BottomNavigation`.
+- `data/ApiClient.kt` — Ktor client singleton plus the serializable models. Base URL is `http://localhost:8080`, reached through `adb reverse tcp:8080 tcp:8080`; cleartext is allowed for localhost only (`res/xml/network_security_config.xml`).
+- `ui/theme/` — always-dark theme from the Figma kit. `ui/components/PlaylistArtwork.kt` draws generated gradient covers.
 
-Known in-progress gaps (useful teaching points, don't silently fix): no ViewModel, networking, or media playback libraries yet; `material-icons-extended` is declared twice in `app/build.gradle.kts`. Read the code for the current state rather than trusting this list.
+## Server (`server/`)
+
+A separate Gradle project (its own wrapper), not a module of the Android build. Kotlin + Ktor (Netty) + plain JDBC to PostgreSQL. `Application.kt` holds the routes, `Database.kt` the SQL and models. It binds to `127.0.0.1:8080`. It reads `DB_URL` / `DB_USER` (defaults: `localhost:5432/music_directory`, `music_directory`) and requires `DB_PASSWORD`. `server/db/setup.sql` creates the role and database once; tables are created on startup.
+
+- Run: `cd server; $env:DB_PASSWORD="..."; .\gradlew.bat run`
+- Compile only: `cd server; ./gradlew compileKotlin`
+
+## v0's known weaknesses (the teaching backlog; don't silently fix)
+
+Use these as round problems, one at a time, reproduced on the phone or with curl. Read the code for the current state, since some may already be fixed.
+
+- App: no error handling, so the app crashes when the server is down or a request fails. No loading or empty states. Screens call `ApiClient` directly (no ViewModel or repository), so rotation refetches. Every change reloads the whole list. Dialogs accept empty names. Deleting asks for no confirmation. `BottomNavigation` takes a `NavBackStackEntry` and highlights no tab on `playlist/{id}`. Route strings are duplicated between `Destination` and the `NavHost`. `material-icons-extended` is declared twice in `app/build.gradle.kts`.
+- Server: no input validation (empty or huge names, malformed JSON, non-numeric ids give 500s). `!!.toInt()` on path params. Rename or delete of a missing id still returns 204. Adding a song to a missing playlist gives a 500 from the foreign key. Deleting a playlist runs two statements without a transaction. A new DB connection per query (no pool). `CREATE TABLE IF NOT EXISTS` instead of migrations. No auth, no rate limiting, no logging of failures, no tests. Models are duplicated between `server/` and `app/`.
 
 ## Commands
 

@@ -19,6 +19,7 @@ import com.example.music_directory.feature.home.HomeScreen
 import com.example.music_directory.feature.library.LibraryScreen
 import com.example.music_directory.feature.navigation.BottomNavigation
 import com.example.music_directory.feature.navigation.Destination
+import com.example.music_directory.feature.playlist.PlaylistScreen
 import com.example.music_directory.feature.search.SearchScreen
 import com.example.music_directory.ui.theme.MusicdirectoryTheme
 
@@ -59,7 +60,17 @@ fun MainScreen() {
                 SearchScreen(modifier = Modifier.padding(innerPadding))
             }
             composable("library") {
-                LibraryScreen(modifier = Modifier.padding(innerPadding))
+                LibraryScreen(
+                    onPlaylistClick = { id -> navController.navigate("playlist/$id") },
+                    modifier = Modifier.padding(innerPadding),
+                )
+            }
+            composable("playlist/{id}") { entry ->
+                PlaylistScreen(
+                    playlistId = entry.arguments!!.getString("id")!!.toInt(),
+                    onBack = { navController.popBackStack() },
+                    modifier = Modifier.padding(innerPadding),
+                )
             }
         }
     }

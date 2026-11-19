@@ -22,25 +22,60 @@ Android app  ──►  Backend (home server)  ──►  YouTube API (search, t
 
 | Part | State |
 |---|---|
-| Android app shell (Home / Search / Library tabs) | In progress |
-| Navigation (Navigation Compose) | Next |
-| Backend | Not started (design first) |
+| Android app shell (Home / Search / Library tabs) | Done |
+| Navigation (Navigation Compose) | Done |
+| **v0: playlists CRUD** (app + Ktor server + Postgres) | Done. Deliberately naive; improving it in rounds |
 | Home server exposure (TLS, remote access) | Not started |
-| Search, playback, library, offline downloads | Not started |
+| Search, playback, offline downloads | Not started |
 
 ## Tech stack
 
-- **Android app:** Kotlin, Jetpack Compose, Material 3, Navigation Compose
-- **Backend:** undecided
+- **Android app:** Kotlin, Jetpack Compose, Material 3, Navigation Compose, Ktor client
+- **Backend:** Kotlin, Ktor, PostgreSQL (`server/`)
+- **On-device storage (later):** SQLite, for offline downloads
 - **Music storage:** Navidrome (self-hosted)
 - **Downloading:** yt-dlp
 
-## Running the Android app
+## v0 API
 
-Requires Android Studio, or a JDK with the Android SDK. Run from the repo root:
+| Method | Path | Does |
+|---|---|---|
+| GET | `/playlists` | List playlists with song counts |
+| POST | `/playlists` | Create a playlist `{ "name" }` |
+| GET | `/playlists/{id}` | One playlist with its songs |
+| PUT | `/playlists/{id}` | Rename `{ "name" }` |
+| DELETE | `/playlists/{id}` | Delete a playlist and its songs |
+| POST | `/playlists/{id}/songs` | Add a song `{ "title", "artist" }` |
+| DELETE | `/songs/{id}` | Remove a song |
+
+## Running it locally
+
+**1. Database (once).** Postgres must be running. Create the app's role and database, choosing your own password:
 
 ```bash
-./gradlew installDebug        # build and install on a connected phone or emulator
+psql -U postgres -v app_password='pick-a-password' -f server/db/setup.sql
+```
+
+**2. Server.** From `server/`, with the same password (the tables are created on startup):
+
+```powershell
+$env:DB_PASSWORD = "pick-a-password"; .\gradlew.bat run
+```
+
+It listens on `127.0.0.1:8080` only, so nothing on your network can reach it.
+
+**3. Phone.** With the phone connected over adb, forward its port 8080 to the PC, then install:
+
+```bash
+adb reverse tcp:8080 tcp:8080
+./gradlew installDebug
+```
+
+Re-run `adb reverse` whenever the phone reconnects.
+
+Other commands, from the repo root:
+
+```bash
 ./gradlew testDebugUnitTest   # unit tests
 ./gradlew clean               # clear stale build output
 ```

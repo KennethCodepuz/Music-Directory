@@ -9,5 +9,5 @@ import androidx.compose.ui.graphics.vector.ImageVector
 enum class Destination(val route: String, val label: String, val icon: ImageVector) {
     HOME("home", "Home", Icons.Filled.Home),
     SEARCH("search", "Search", Icons.Filled.Search),
-    LIBRARY("library", "Library", Icons.Filled.LibraryMusic)
+    LIBRARY("library", "Your Library", Icons.Filled.LibraryMusic)
 }
